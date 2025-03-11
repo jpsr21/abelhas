@@ -1,86 +1,53 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitoramento ESP32</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
-    body { text-align: center; padding: 20px; background-color: #f4f4f4; }
-    h1 { color: #333; margin-bottom: 20px; }
-
-    .container {
-      display: grid;
-      gap: 15px;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      max-width: 600px;
-      margin: auto;
-    }
-
-    .box {
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-width: 120px;
-    }
-
-    .temp { background: #ff726f; color: white; }
-    .humidity { background: #4fa3d1; color: white; }
-    .weight { background: #78c879; color: white; }
-    .co2 { background: #f4a261; color: white; }
-
-    .value { font-size: 2.2em; font-weight: bold; }
-    .unit { font-size: 1em; opacity: 0.8; }
-
-    @media (max-width: 500px) {
-      .container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-      .box { width: 100%; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoramento de Sensores</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .dados {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-  <h1>Monitoramento de Sensores</h1>
-  <div class="container">
-    <div class="box temp">
-      <h2>Temperatura</h2>
-      <div class="value" id="temp">--</div>
-      <div class="unit">°C</div>
+    <h1>Monitoramento de Sensores</h1>
+    <div class="dados">
+        <p><strong>Temperatura:</strong> <span id="temp">--</span> °C</p>
+        <p><strong>Umidade:</strong> <span id="umid">--</span> %</p>
+        <p><strong>Peso:</strong> <span id="peso">--</span> kg</p>
+        <p><strong>CO₂:</strong> <span id="co2">--</span> ppm</p>
     </div>
-    <div class="box humidity">
-      <h2>Umidade</h2>
-      <div class="value" id="humidity">--</div>
-      <div class="unit">%</div>
-    </div>
-    <div class="box weight">
-      <h2>Massa</h2>
-      <div class="value" id="weight">--</div>
-      <div class="unit">kg</div>
-    </div>
-    <div class="box co2">
-      <h2>CO₂</h2>
-      <div class="value" id="co2">--</div>
-      <div class="unit">ppm</div>
-    </div>
-  </div>
 
-  <script>
-    let socket = new WebSocket("wss://abelhas.onrender.com");
+    <script>
+        const socket = new WebSocket("wss://abelhas.onrender.com");
 
-    socket.onmessage = function(event) {
-      let data = JSON.parse(event.data);
-      document.getElementById("temp").innerText = data.temperatura;
-      document.getElementById("humidity").innerText = data.umidade;
-      document.getElementById("weight").innerText = data.peso;
-      document.getElementById("co2").innerText = data.co2;
-    };
-  </script>
+        socket.onopen = function () {
+            console.log("Conectado ao WebSocket!");
+        };
+
+        socket.onmessage = function (event) {
+            console.log("Dados recebidos:", event.data);
+            const dados = JSON.parse(event.data);
+            document.getElementById("temp").innerText = dados.temperatura;
+            document.getElementById("umid").innerText = dados.umidade;
+            document.getElementById("peso").innerText = dados.peso;
+            document.getElementById("co2").innerText = dados.co2;
+        };
+
+        socket.onerror = function (error) {
+            console.error("Erro no WebSocket:", error);
+        };
+
+        socket.onclose = function () {
+            console.warn("WebSocket desconectado!");
+        };
+    </script>
 </body>
 </html>
