@@ -5,35 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoramento de Sensores</title>
     <style>
-        body {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
             font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 20px;
         }
+
+        body {
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 22px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
         .dados {
-            font-size: 20px;
-            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            font-size: 18px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .valor {
+            font-size: 22px;
+            color: #007bff;
         }
     </style>
 </head>
 <body>
-    <h1>Monitoramento de Sensores</h1>
-    <div class="dados">
-        <p><strong>Temperatura:</strong> <span id="temp">--</span> °C</p>
-        <p><strong>Umidade:</strong> <span id="umid">--</span> %</p>
-        <p><strong>Peso:</strong> <span id="peso">--</span> kg</p>
-        <p><strong>CO₂:</strong> <span id="co2">--</span> ppm</p>
+
+    <div class="container">
+        <h1>Monitoramento de Sensores</h1>
+        <div class="dados">
+            <div class="card">🌡️ Temperatura: <span id="temp" class="valor">--</span> °C</div>
+            <div class="card">💧 Umidade: <span id="umid" class="valor">--</span> %</div>
+            <div class="card">⚖️ Peso: <span id="peso" class="valor">--</span> kg</div>
+            <div class="card">🫁 CO₂: <span id="co2" class="valor">--</span> ppm</div>
+        </div>
     </div>
 
     <script>
         const socket = new WebSocket("wss://abelhas.onrender.com");
 
         socket.onopen = function () {
-            console.log("Conectado ao WebSocket!");
+            console.log("✅ Conectado ao WebSocket!");
         };
 
         socket.onmessage = function (event) {
-            console.log("Dados recebidos:", event.data);
+            console.log("📡 Dados recebidos:", event.data);
             const dados = JSON.parse(event.data);
             document.getElementById("temp").innerText = dados.temperatura;
             document.getElementById("umid").innerText = dados.umidade;
@@ -42,12 +84,13 @@
         };
 
         socket.onerror = function (error) {
-            console.error("Erro no WebSocket:", error);
+            console.error("❌ Erro no WebSocket:", error);
         };
 
         socket.onclose = function () {
-            console.warn("WebSocket desconectado!");
+            console.warn("⚠️ WebSocket desconectado!");
         };
     </script>
+
 </body>
 </html>
