@@ -1,6 +1,5 @@
 const express = require("express");
 const WebSocket = require("ws");
-const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const app = express();
@@ -8,37 +7,41 @@ const port = process.env.PORT || 3000;
 
 // Middleware para permitir requisições JSON e CORS
 app.use(cors());
-app.use(bodyParser.json());
 
 // WebSocket Server
 const wss = new WebSocket.Server({ port: 8080 });
 
-let ultimoDado = {}; // Armazena o último dado recebido
+let ultimoDado = {}; // Armazena o último dado gerado
 
-// Rota para receber dados do ESP32
-app.post("/dados", (req, res) => {
-  ultimoDado = req.body;
-  console.log("Recebido do ESP32:", ultimoDado);
+// Função para gerar valores aleatórios (simulação de sensores)
+function gerarDados() {
+  return {
+    temperatura: (Math.random() * (35 - 20) + 20).toFixed(1), // 20°C a 35°C
+    umidade: (Math.random() * (90 - 40) + 40).toFixed(1), // 40% a 90%
+    peso: (Math.random() * (10 - 5) + 5).toFixed(2), // 5kg a 10kg
+    co2: Math.floor(Math.random() * (800 - 300) + 300) // 300ppm a 800ppm
+  };
+}
 
-  // Enviar dados para todos os clientes WebSocket conectados
+// Envia dados aleatórios a cada 2 segundos
+setInterval(() => {
+  ultimoDado = gerarDados();
+  console.log("Enviando dados:", ultimoDado);
+
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(ultimoDado));
     }
   });
+}, 2000);
 
-  res.json({ status: "OK" });
+// Endpoint para testar a API via HTTP
+app.get("/dados", (req, res) => {
+  res.json(ultimoDado);
 });
 
 // Iniciar servidor HTTP
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
-});
-
-// WebSocket conectado
-wss.on("connection", ws => {
-  console.log("Cliente WebSocket conectado!");
-  if (Object.keys(ultimoDado).length > 0) {
-    ws.send(JSON.stringify(ultimoDado)); // Envia o último dado ao novo cliente
-  }
+  console.log(`WebSocket rodando em ws://localhost:8080/`);
 });
