@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Monitoramento de Sensores</title>
 <style>
-body { text-align: center; background-color: #f4f4f4; font-family: Arial; padding: 20px; }
+body { text-align: center; background-color: #f4f4f4; font-family: Arial, sans-serif; padding: 20px; }
 .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); }
 h1 { font-size: 22px; color: #333; margin-bottom: 15px; }
 .dados { display: flex; flex-direction: column; gap: 15px; }
@@ -28,41 +28,52 @@ h1 { font-size: 22px; color: #333; margin-bottom: 15px; }
 </div>
 
 <script>
-// Conecta ao WebSocket do Render
-const socket = new WebSocket("wss://abelhas.onrender.com");
+let socket;
 
-socket.onopen = () => {
-  console.log("✅ Conectado ao WebSocket!");
-  document.getElementById("status").innerText = "✅ Conectado ao servidor!";
-  document.getElementById("status").className = "status seguro";
-};
+function conectar() {
+  socket = new WebSocket("wss://abelhas.onrender.com");
 
-socket.onmessage = (event) => {
-  const dados = JSON.parse(event.data);
-  document.getElementById("temp").innerText = dados.temperatura;
-  document.getElementById("umid").innerText = dados.umidade;
-
-  const statusEl = document.getElementById("status");
-  if (dados.status === "CHAMA") {
-    statusEl.innerText = "🔥 ALERTA: Chama detectada!";
-    statusEl.className = "status chama";
-  } else {
-    statusEl.innerText = "✅ Ambiente seguro";
+  socket.onopen = () => {
+    console.log("✅ Conectado ao WebSocket!");
+    const statusEl = document.getElementById("status");
+    statusEl.innerText = "✅ Conectado ao servidor!";
     statusEl.className = "status seguro";
-  }
-};
+  };
 
-socket.onerror = (error) => {
-  console.error("❌ Erro no WebSocket:", error);
-  document.getElementById("status").innerText = "❌ Erro na conexão!";
-  document.getElementById("status").className = "status chama";
-};
+  socket.onmessage = (event) => {
+    try {
+      const dados = JSON.parse(event.data);
+      document.getElementById("temp").innerText = dados.temperatura;
+      document.getElementById("umid").innerText = dados.umidade;
 
-socket.onclose = () => {
-  console.warn("⚠️ WebSocket desconectado!");
-  document.getElementById("status").innerText = "⚠️ Desconectado do servidor!";
-  document.getElementById("status").className = "status chama";
-};
+      const statusEl = document.getElementById("status");
+      if (dados.status === "CHAMA") {
+        statusEl.innerText = "🔥 ALERTA: Chama detectada!";
+        statusEl.className = "status chama";
+      } else {
+        statusEl.innerText = "✅ Ambiente seguro";
+        statusEl.className = "status seguro";
+      }
+    } catch (err) {
+      console.error("Erro ao parsear dados:", err);
+    }
+  };
+
+  socket.onerror = (err) => {
+    console.error("❌ Erro no WebSocket:", err);
+  };
+
+  socket.onclose = () => {
+    console.warn("⚠️ WebSocket desconectado, tentando reconectar...");
+    const statusEl = document.getElementById("status");
+    statusEl.innerText = "⚠️ Reconectando...";
+    statusEl.className = "status chama";
+    setTimeout(conectar, 3000); // tenta reconectar a cada 3 segundos
+  };
+}
+
+// Inicializa a primeira conexão
+conectar();
 </script>
 
 </body>
