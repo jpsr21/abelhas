@@ -1,48 +1,54 @@
 const express = require("express");
-const WebSocket = require("ws");
-const cors = require("cors");
 const http = require("http");
+const WebSocket = require("ws");
+const bodyParser = require("body-parser");
 
 const app = express();
-const port = process.env.PORT || 3000;
-
-app.use(cors());
-
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-let ultimoDado = {
-  temperatura: "0",
-  umidade: "0",
-  peso: "0",
-  co2: "0"
-};
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-function gerarDados() {
-  return {
-    temperatura: (Math.random() * (35 - 20) + 20).toFixed(1),
-    umidade: (Math.random() * (90 - 40) + 40).toFixed(1),
-    peso: (Math.random() * (10 - 5) + 5).toFixed(2),
-    co2: Math.floor(Math.random() * (800 - 300) + 300)
-  };
-}
+let clients = [];
 
-setInterval(() => {
-  ultimoDado = gerarDados();
-  console.log("Enviando dados:", ultimoDado);
+// Quando o navegador conecta via WebSocket
+wss.on("connection", (ws) => {
+  console.log("✅ Novo cliente conectado!");
+  clients.push(ws);
 
-  wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(ultimoDado));
-    }
+  ws.on("close", () => {
+    console.log("⚠️ Cliente desconectado!");
+    clients = clients.filter((client) => client !== ws);
   });
-}, 2000);
-
-app.get("/dados", (req, res) => {
-  res.json(ultimoDado);
 });
 
-// Iniciar servidor HTTP + WebSocket
-server.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
+// Rota para o ESP32 enviar dados
+app.post("/dados", (req, res) => {
+  const { temperatura, umidade, chama, status } = req.body;
+
+  const dados = {
+    temperatura,
+    umidade,
+    chama,
+    status,
+    horario: new Date().toLocaleString("pt-BR"),
+  };
+
+  console.log("📡 Dados recebidos do ESP32:", dados);
+
+  // Repassa para todos os navegadores conectados
+  clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(dados));
+    }
+  });
+
+  res.send("✅ Dados recebidos e enviados aos clientes!");
+});
+
+// Inicia o servidor
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
 });

@@ -1,96 +1,124 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoramento de Sensores</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoramento de Sensores</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
 
-        body {
-            text-align: center;
-            background-color: #f4f4f4;
-            padding: 20px;
-        }
+    body {
+      text-align: center;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
 
-        .container {
-            max-width: 400px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    }
 
-        h1 {
-            font-size: 22px;
-            color: #333;
-            margin-bottom: 15px;
-        }
+    h1 {
+      font-size: 22px;
+      color: #333;
+      margin-bottom: 15px;
+    }
 
-        .dados {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+    .dados {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
 
-        .card {
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-            font-size: 18px;
-            font-weight: bold;
-            color: #444;
-        }
+    .card {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+      font-size: 18px;
+      font-weight: bold;
+      color: #444;
+    }
 
-        .valor {
-            font-size: 22px;
-            color: #007bff;
-        }
-    </style>
+    .valor {
+      font-size: 22px;
+      color: #007bff;
+    }
+
+    .status {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .seguro {
+      color: green;
+    }
+
+    .chama {
+      color: red;
+    }
+  </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Monitoramento de Sensores</h1>
-        <div class="dados">
-            <div class="card">🌡️ Temperatura: <span id="temp" class="valor">--</span> °C</div>
-            <div class="card">💧 Umidade: <span id="umid" class="valor">--</span> %</div>
-            <div class="card">⚖️ Peso: <span id="peso" class="valor">--</span> kg</div>
-            <div class="card">🫁 CO₂: <span id="co2" class="valor">--</span> ppm</div>
-        </div>
+  <div class="container">
+    <h1>Monitoramento de Sensores</h1>
+    <div class="dados">
+      <div class="card">🌡️ Temperatura: <span id="temp" class="valor">--</span> °C</div>
+      <div class="card">💧 Umidade: <span id="umid" class="valor">--</span> %</div>
+      <div class="card status" id="status">⏳ Aguardando dados...</div>
     </div>
+  </div>
 
-    <script>
-        const socket = new WebSocket("wss://abelhas.onrender.com");
+  <script>
+    // Troque para o endereço do seu servidor Node.js
+    const socket = new WebSocket("wss://SEU_SERVIDOR.onrender.com");
 
-        socket.onopen = function () {
-            console.log("✅ Conectado ao WebSocket!");
-        };
+    socket.onopen = function () {
+      console.log("✅ Conectado ao WebSocket!");
+      document.getElementById("status").innerText = "✅ Conectado ao servidor!";
+      document.getElementById("status").className = "status seguro";
+    };
 
-        socket.onmessage = function (event) {
-            console.log("📡 Dados recebidos:", event.data);
-            const dados = JSON.parse(event.data);
-            document.getElementById("temp").innerText = dados.temperatura;
-            document.getElementById("umid").innerText = dados.umidade;
-            document.getElementById("peso").innerText = dados.peso;
-            document.getElementById("co2").innerText = dados.co2;
-        };
+    socket.onmessage = function (event) {
+      console.log("📡 Dados recebidos:", event.data);
+      const dados = JSON.parse(event.data);
 
-        socket.onerror = function (error) {
-            console.error("❌ Erro no WebSocket:", error);
-        };
+      document.getElementById("temp").innerText = dados.temperatura;
+      document.getElementById("umid").innerText = dados.umidade;
 
-        socket.onclose = function () {
-            console.warn("⚠️ WebSocket desconectado!");
-        };
-    </script>
+      const statusEl = document.getElementById("status");
+      if (dados.status === "CHAMA") {
+        statusEl.innerText = "🔥 ALERTA: Chama detectada!";
+        statusEl.className = "status chama";
+      } else {
+        statusEl.innerText = "✅ Ambiente seguro";
+        statusEl.className = "status seguro";
+      }
+    };
+
+    socket.onerror = function (error) {
+      console.error("❌ Erro no WebSocket:", error);
+      document.getElementById("status").innerText = "❌ Erro na conexão!";
+      document.getElementById("status").className = "status chama";
+    };
+
+    socket.onclose = function () {
+      console.warn("⚠️ WebSocket desconectado!");
+      document.getElementById("status").innerText = "⚠️ Desconectado do servidor!";
+      document.getElementById("status").className = "status chama";
+    };
+  </script>
 
 </body>
 </html>
