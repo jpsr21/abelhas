@@ -1,41 +1,82 @@
-let socket;
+const express = require("express");
+const http = require("http");
+const WebSocket = require("ws");
+const bodyParser = require("body-parser");
 
-function conectar() {
-  socket = new WebSocket("wss://abelhas.onrender.com");
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
-  socket.onopen = () => {
-    console.log("✅ Conectado ao WebSocket!");
-    document.getElementById("status").innerText = "✅ Conectado ao servidor!";
-    document.getElementById("status").className = "status seguro";
-  };
+// Middleware para receber JSON
+app.use(bodyParser.json());
 
-  socket.onmessage = (event) => {
-    const dados = JSON.parse(event.data);
-    document.getElementById("temp").innerText = dados.temperatura;
-    document.getElementById("umid").innerText = dados.umidade;
+// Lista de clientes WebSocket
+let clients = [];
 
-    const statusEl = document.getElementById("status");
-    if (dados.status === "CHAMA") {
-      statusEl.innerText = "🔥 ALERTA: Chama detectada!";
-      statusEl.className = "status chama";
-    } else {
-      statusEl.innerText = "✅ Ambiente seguro";
-      statusEl.className = "status seguro";
+// Conexão WebSocket
+wss.on("connection", (ws) => {
+  console.log("✅ Novo cliente conectado!");
+  clients.push(ws);
+
+  ws.on("close", () => {
+    console.log("⚠️ Cliente desconectado!");
+    clients = clients.filter((client) => client !== ws);
+  });
+
+  ws.on("error", (err) => {
+    console.error("❌ Erro no WebSocket:", err);
+  });
+});
+
+// Rota para receber dados do ESP32
+app.post("/dados", (req, res) => {
+  try {
+    // Valida se o corpo do POST existe
+    if (!req.body) {
+      return res.status(400).send("JSON inválido ou vazio");
     }
-  };
 
-  socket.onerror = (error) => {
-    console.error("❌ Erro no WebSocket:", error);
-  };
+    // Extrai os dados, garantindo que existam
+    const { temperatura, umidade, chama, status } = req.body;
+    if (
+      temperatura === undefined ||
+      umidade === undefined ||
+      chama === undefined ||
+      status === undefined
+    ) {
+      return res.status(400).send("Campos incompletos no JSON");
+    }
 
-  socket.onclose = () => {
-    console.warn("⚠️ WebSocket desconectado, tentando reconectar em 3s...");
-    document.getElementById("status").innerText = "⚠️ Reconectando...";
-    document.getElementById("status").className = "status chama";
+    const dados = {
+      temperatura,
+      umidade,
+      chama,
+      status,
+      horario: new Date().toLocaleString("pt-BR"),
+    };
 
-    setTimeout(conectar, 3000); // tenta reconectar a cada 3 segundos
-  };
-}
+    console.log("📡 Dados recebidos do ESP32:", dados);
 
-// Inicializa a primeira conexão
-conectar();
+    // Envia para todos os clientes WebSocket abertos
+    clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        try {
+          client.send(JSON.stringify(dados));
+        } catch (err) {
+          console.error("❌ Erro ao enviar para cliente:", err);
+        }
+      }
+    });
+
+    res.send("✅ Dados recebidos e enviados aos clientes!");
+  } catch (err) {
+    console.error("❌ Erro na rota /dados:", err);
+    res.status(500).send("Erro interno do servidor");
+  }
+});
+
+// Inicia o servidor
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+});
