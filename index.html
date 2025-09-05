@@ -5,72 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monitoramento de Sensores</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      text-align: center;
-      background-color: #f4f4f4;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 400px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
-      font-size: 22px;
-      color: #333;
-      margin-bottom: 15px;
-    }
-
-    .dados {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .card {
-      background: #f9f9f9;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-      font-size: 18px;
-      font-weight: bold;
-      color: #444;
-    }
-
-    .valor {
-      font-size: 22px;
-      color: #007bff;
-    }
-
-    .status {
-      font-size: 20px;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-
-    .seguro {
-      color: green;
-    }
-
-    .chama {
-      color: red;
-    }
+    body { text-align: center; background-color: #f4f4f4; font-family: Arial; padding: 20px; }
+    .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); }
+    h1 { font-size: 22px; color: #333; margin-bottom: 15px; }
+    .dados { display: flex; flex-direction: column; gap: 15px; }
+    .card { background: #f9f9f9; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; color: #444; }
+    .valor { font-size: 22px; color: #007bff; }
+    .status { font-size: 20px; font-weight: bold; margin-top: 10px; }
+    .seguro { color: green; }
+    .chama { color: red; }
   </style>
 </head>
 <body>
-
   <div class="container">
     <h1>Monitoramento de Sensores</h1>
     <div class="dados">
@@ -81,19 +27,16 @@
   </div>
 
   <script>
-    // Troque para o endereço do seu servidor Node.js
-    const socket = new WebSocket("wss://SEU_SERVIDOR.onrender.com");
+    const socket = new WebSocket("wss://abelhas.onrender.com");
 
-    socket.onopen = function () {
+    socket.onopen = () => {
       console.log("✅ Conectado ao WebSocket!");
       document.getElementById("status").innerText = "✅ Conectado ao servidor!";
       document.getElementById("status").className = "status seguro";
     };
 
-    socket.onmessage = function (event) {
-      console.log("📡 Dados recebidos:", event.data);
+    socket.onmessage = (event) => {
       const dados = JSON.parse(event.data);
-
       document.getElementById("temp").innerText = dados.temperatura;
       document.getElementById("umid").innerText = dados.umidade;
 
@@ -107,18 +50,17 @@
       }
     };
 
-    socket.onerror = function (error) {
+    socket.onerror = (error) => {
       console.error("❌ Erro no WebSocket:", error);
       document.getElementById("status").innerText = "❌ Erro na conexão!";
       document.getElementById("status").className = "status chama";
     };
 
-    socket.onclose = function () {
+    socket.onclose = () => {
       console.warn("⚠️ WebSocket desconectado!");
       document.getElementById("status").innerText = "⚠️ Desconectado do servidor!";
       document.getElementById("status").className = "status chama";
     };
   </script>
-
 </body>
 </html>
