@@ -1,53 +1,41 @@
-const express = require("express");
-const http = require("http");
-const WebSocket = require("ws");
-const bodyParser = require("body-parser");
+let socket;
 
-const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+function conectar() {
+  socket = new WebSocket("wss://abelhas.onrender.com");
 
-app.use(bodyParser.json());
-
-// Lista de clientes WebSocket
-let clients = [];
-
-wss.on("connection", (ws) => {
-  console.log("✅ Novo cliente conectado!");
-  clients.push(ws);
-
-  ws.on("close", () => {
-    console.log("⚠️ Cliente desconectado!");
-    clients = clients.filter((client) => client !== ws);
-  });
-});
-
-// Rota para receber dados do ESP32
-app.post("/dados", (req, res) => {
-  const { temperatura, umidade, chama, status } = req.body;
-
-  const dados = {
-    temperatura,
-    umidade,
-    chama,
-    status,
-    horario: new Date().toLocaleString("pt-BR"),
+  socket.onopen = () => {
+    console.log("✅ Conectado ao WebSocket!");
+    document.getElementById("status").innerText = "✅ Conectado ao servidor!";
+    document.getElementById("status").className = "status seguro";
   };
 
-  console.log("📡 Dados recebidos do ESP32:", dados);
+  socket.onmessage = (event) => {
+    const dados = JSON.parse(event.data);
+    document.getElementById("temp").innerText = dados.temperatura;
+    document.getElementById("umid").innerText = dados.umidade;
 
-  // Envia para todos os navegadores conectados via WebSocket
-  clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(dados));
+    const statusEl = document.getElementById("status");
+    if (dados.status === "CHAMA") {
+      statusEl.innerText = "🔥 ALERTA: Chama detectada!";
+      statusEl.className = "status chama";
+    } else {
+      statusEl.innerText = "✅ Ambiente seguro";
+      statusEl.className = "status seguro";
     }
-  });
+  };
 
-  res.send("✅ Dados recebidos e enviados aos clientes!");
-});
+  socket.onerror = (error) => {
+    console.error("❌ Erro no WebSocket:", error);
+  };
 
-// Inicia o servidor
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
-});
+  socket.onclose = () => {
+    console.warn("⚠️ WebSocket desconectado, tentando reconectar em 3s...");
+    document.getElementById("status").innerText = "⚠️ Reconectando...";
+    document.getElementById("status").className = "status chama";
+
+    setTimeout(conectar, 3000); // tenta reconectar a cada 3 segundos
+  };
+}
+
+// Inicializa a primeira conexão
+conectar();
