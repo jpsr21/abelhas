@@ -1,66 +1,69 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitoramento de Sensores</title>
-  <style>
-    body { text-align: center; background-color: #f4f4f4; font-family: Arial; padding: 20px; }
-    .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); }
-    h1 { font-size: 22px; color: #333; margin-bottom: 15px; }
-    .dados { display: flex; flex-direction: column; gap: 15px; }
-    .card { background: #f9f9f9; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; color: #444; }
-    .valor { font-size: 22px; color: #007bff; }
-    .status { font-size: 20px; font-weight: bold; margin-top: 10px; }
-    .seguro { color: green; }
-    .chama { color: red; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitoramento de Sensores</title>
+<style>
+body { text-align: center; background-color: #f4f4f4; font-family: Arial; padding: 20px; }
+.container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); }
+h1 { font-size: 22px; color: #333; margin-bottom: 15px; }
+.dados { display: flex; flex-direction: column; gap: 15px; }
+.card { background: #f9f9f9; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; color: #444; }
+.valor { font-size: 22px; color: #007bff; }
+.status { font-size: 20px; font-weight: bold; margin-top: 10px; }
+.seguro { color: green; }
+.chama { color: red; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Monitoramento de Sensores</h1>
-    <div class="dados">
-      <div class="card">🌡️ Temperatura: <span id="temp" class="valor">--</span> °C</div>
-      <div class="card">💧 Umidade: <span id="umid" class="valor">--</span> %</div>
-      <div class="card status" id="status">⏳ Aguardando dados...</div>
-    </div>
+
+<div class="container">
+  <h1>Monitoramento de Sensores</h1>
+  <div class="dados">
+    <div class="card">🌡️ Temperatura: <span id="temp" class="valor">--</span> °C</div>
+    <div class="card">💧 Umidade: <span id="umid" class="valor">--</span> %</div>
+    <div class="card status" id="status">⏳ Aguardando dados...</div>
   </div>
+</div>
 
-  <script>
-    const socket = new WebSocket("wss://abelhas.onrender.com");
+<script>
+// Conecta ao WebSocket do Render
+const socket = new WebSocket("wss://abelhas.onrender.com");
 
-    socket.onopen = () => {
-      console.log("✅ Conectado ao WebSocket!");
-      document.getElementById("status").innerText = "✅ Conectado ao servidor!";
-      document.getElementById("status").className = "status seguro";
-    };
+socket.onopen = () => {
+  console.log("✅ Conectado ao WebSocket!");
+  document.getElementById("status").innerText = "✅ Conectado ao servidor!";
+  document.getElementById("status").className = "status seguro";
+};
 
-    socket.onmessage = (event) => {
-      const dados = JSON.parse(event.data);
-      document.getElementById("temp").innerText = dados.temperatura;
-      document.getElementById("umid").innerText = dados.umidade;
+socket.onmessage = (event) => {
+  const dados = JSON.parse(event.data);
+  document.getElementById("temp").innerText = dados.temperatura;
+  document.getElementById("umid").innerText = dados.umidade;
 
-      const statusEl = document.getElementById("status");
-      if (dados.status === "CHAMA") {
-        statusEl.innerText = "🔥 ALERTA: Chama detectada!";
-        statusEl.className = "status chama";
-      } else {
-        statusEl.innerText = "✅ Ambiente seguro";
-        statusEl.className = "status seguro";
-      }
-    };
+  const statusEl = document.getElementById("status");
+  if (dados.status === "CHAMA") {
+    statusEl.innerText = "🔥 ALERTA: Chama detectada!";
+    statusEl.className = "status chama";
+  } else {
+    statusEl.innerText = "✅ Ambiente seguro";
+    statusEl.className = "status seguro";
+  }
+};
 
-    socket.onerror = (error) => {
-      console.error("❌ Erro no WebSocket:", error);
-      document.getElementById("status").innerText = "❌ Erro na conexão!";
-      document.getElementById("status").className = "status chama";
-    };
+socket.onerror = (error) => {
+  console.error("❌ Erro no WebSocket:", error);
+  document.getElementById("status").innerText = "❌ Erro na conexão!";
+  document.getElementById("status").className = "status chama";
+};
 
-    socket.onclose = () => {
-      console.warn("⚠️ WebSocket desconectado!");
-      document.getElementById("status").innerText = "⚠️ Desconectado do servidor!";
-      document.getElementById("status").className = "status chama";
-    };
-  </script>
+socket.onclose = () => {
+  console.warn("⚠️ WebSocket desconectado!");
+  document.getElementById("status").innerText = "⚠️ Desconectado do servidor!";
+  document.getElementById("status").className = "status chama";
+};
+</script>
+
 </body>
 </html>

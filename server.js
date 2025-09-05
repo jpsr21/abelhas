@@ -8,11 +8,10 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 
+// Lista de clientes WebSocket
 let clients = [];
 
-// Quando o navegador conecta via WebSocket
 wss.on("connection", (ws) => {
   console.log("✅ Novo cliente conectado!");
   clients.push(ws);
@@ -23,7 +22,7 @@ wss.on("connection", (ws) => {
   });
 });
 
-// Rota para o ESP32 enviar dados
+// Rota para receber dados do ESP32
 app.post("/dados", (req, res) => {
   const { temperatura, umidade, chama, status } = req.body;
 
@@ -37,7 +36,7 @@ app.post("/dados", (req, res) => {
 
   console.log("📡 Dados recebidos do ESP32:", dados);
 
-  // Repassa para todos os navegadores conectados
+  // Envia para todos os navegadores conectados via WebSocket
   clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(dados));
