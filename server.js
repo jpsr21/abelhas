@@ -31,18 +31,19 @@ wss.on("connection", (ws) => {
 // Rota para receber dados do ESP32
 app.post("/dados", (req, res) => {
   try {
-    // Valida se o corpo do POST existe
     if (!req.body) {
       return res.status(400).send("JSON inválido ou vazio");
     }
 
-    // Extrai os dados, garantindo que existam
-    const { temperatura, umidade, chama, status } = req.body;
+    // Espera receber do ESP32: DHT11, MQ135 e GPS
+    const { temperatura, umidade, mq135, latitude, longitude } = req.body;
+
     if (
       temperatura === undefined ||
       umidade === undefined ||
-      chama === undefined ||
-      status === undefined
+      mq135 === undefined ||
+      latitude === undefined ||
+      longitude === undefined
     ) {
       return res.status(400).send("Campos incompletos no JSON");
     }
@@ -50,8 +51,9 @@ app.post("/dados", (req, res) => {
     const dados = {
       temperatura,
       umidade,
-      chama,
-      status,
+      mq135,
+      latitude,
+      longitude,
       horario: new Date().toLocaleString("pt-BR"),
     };
 
