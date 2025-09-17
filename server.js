@@ -48,12 +48,27 @@ app.post("/dados", (req, res) => {
       return res.status(400).send("Campos incompletos no JSON");
     }
 
+   // Ajusta limites com base no MQ135
+let status = "SEGURO";
+
+if (temperatura > 50 && mq135 > 3000) {
+  status = "INCENDIO"; // Alta temperatura + fumaça forte
+} else if (mq135 > 3000) {
+  status = "FUMACA";   // Apenas fumaça forte
+} else if (temperatura > 50) {
+  status = "CALOR";    // Apenas temperatura elevada
+} else {
+  status = "SEGURO";   // Ambiente normal
+}
+
+
     const dados = {
       temperatura,
       umidade,
       mq135,
       latitude,
       longitude,
+      status,
       horario: new Date().toLocaleString("pt-BR"),
     };
 

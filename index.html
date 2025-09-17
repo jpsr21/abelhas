@@ -13,7 +13,8 @@ h1 { font-size: 22px; color: #333; margin-bottom: 15px; }
 .valor { font-size: 22px; color: #007bff; }
 .status { font-size: 20px; font-weight: bold; margin-top: 10px; }
 .seguro { color: green; }
-.alerta { color: red; }
+.alerta { color: orange; }
+.perigo { color: red; }
 </style>
 </head>
 <body>
@@ -51,13 +52,20 @@ function conectar() {
       document.getElementById("gps").innerText = `${dados.latitude}, ${dados.longitude}`;
 
       const statusEl = document.getElementById("status");
-      if (dados.mq135 > 400) { // exemplo: alerta se valor MQ135 for alto
-        statusEl.innerText = "⚠️ Qualidade do ar ruim!";
-        statusEl.className = "status alerta";
-      } else {
-        statusEl.innerText = "✅ Ambiente seguro";
-        statusEl.className = "status seguro";
-      }
+      if (dados.status === "INCENDIO") {
+  statusEl.innerText = "🔥 ALERTA: INCÊNDIO DETECTADO!";
+  statusEl.className = "status perigo";
+} else if (dados.status === "FUMACA") {
+  statusEl.innerText = "⚠️ Fumaça detectada!";
+  statusEl.className = "status alerta";
+} else if (dados.status === "CALOR") {
+  statusEl.innerText = "🌡️ Temperatura elevada!";
+  statusEl.className = "status alerta";
+} else {
+  statusEl.innerText = "✅ Ambiente seguro";
+  statusEl.className = "status seguro";
+}
+
     } catch (err) {
       console.error("Erro ao parsear dados:", err);
     }
