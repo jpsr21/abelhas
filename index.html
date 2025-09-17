@@ -6,14 +6,14 @@
 <title>Monitoramento de Sensores</title>
 <style>
 body { text-align: center; background-color: #f4f4f4; font-family: Arial, sans-serif; padding: 20px; }
-.container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); }
+.container { max-width: 450px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); }
 h1 { font-size: 22px; color: #333; margin-bottom: 15px; }
 .dados { display: flex; flex-direction: column; gap: 15px; }
 .card { background: #f9f9f9; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; color: #444; }
 .valor { font-size: 22px; color: #007bff; }
 .status { font-size: 20px; font-weight: bold; margin-top: 10px; }
 .seguro { color: green; }
-.chama { color: red; }
+.alerta { color: red; }
 </style>
 </head>
 <body>
@@ -23,6 +23,8 @@ h1 { font-size: 22px; color: #333; margin-bottom: 15px; }
   <div class="dados">
     <div class="card">🌡️ Temperatura: <span id="temp" class="valor">--</span> °C</div>
     <div class="card">💧 Umidade: <span id="umid" class="valor">--</span> %</div>
+    <div class="card">🏭 Qualidade do Ar (MQ135): <span id="mq135" class="valor">--</span></div>
+    <div class="card">📍 Localização: <span id="gps" class="valor">--</span></div>
     <div class="card status" id="status">⏳ Aguardando dados...</div>
   </div>
 </div>
@@ -45,11 +47,13 @@ function conectar() {
       const dados = JSON.parse(event.data);
       document.getElementById("temp").innerText = dados.temperatura;
       document.getElementById("umid").innerText = dados.umidade;
+      document.getElementById("mq135").innerText = dados.mq135;
+      document.getElementById("gps").innerText = `${dados.latitude}, ${dados.longitude}`;
 
       const statusEl = document.getElementById("status");
-      if (dados.status === "CHAMA") {
-        statusEl.innerText = "🔥 ALERTA: Chama detectada!";
-        statusEl.className = "status chama";
+      if (dados.mq135 > 400) { // exemplo: alerta se valor MQ135 for alto
+        statusEl.innerText = "⚠️ Qualidade do ar ruim!";
+        statusEl.className = "status alerta";
       } else {
         statusEl.innerText = "✅ Ambiente seguro";
         statusEl.className = "status seguro";
@@ -67,7 +71,7 @@ function conectar() {
     console.warn("⚠️ WebSocket desconectado, tentando reconectar...");
     const statusEl = document.getElementById("status");
     statusEl.innerText = "⚠️ Reconectando...";
-    statusEl.className = "status chama";
+    statusEl.className = "status alerta";
     setTimeout(conectar, 3000); // tenta reconectar a cada 3 segundos
   };
 }
