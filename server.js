@@ -51,7 +51,7 @@ app.post("/dados", (req, res) => {
    // Ajusta limites com base no MQ135
 let status = "SEGURO";
 
-if (temperatura > 50 && mq135 > 3000) {
+if (temperatura > 30 && mq135 > 3000) {
   status = "INCENDIO"; // Alta temperatura + fumaça forte
 } else if (mq135 > 3000) {
   status = "FUMACA";   // Apenas fumaça forte
